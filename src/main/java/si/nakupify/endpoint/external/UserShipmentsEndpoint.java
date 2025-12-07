@@ -1,26 +1,23 @@
 package si.nakupify.endpoint.external;
 
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.Response;
-import si.nakupify.dto.ShipmentDTO;
+import si.nakupify.dto.ShipmentDto;
+import si.nakupify.dto.TrackingStatusDto;
 import si.nakupify.service.ShipmentService;
 
 import java.util.List;
 
-/**
- * Public/user-facing read-only endpoints for shipments.
- */
 @Path("/api/shipments")
+@Transactional
 public class UserShipmentsEndpoint {
 
     @Inject
     ShipmentService service;
 
-    // Only delegates to service
-
     @GET
-    public List<ShipmentDTO> list(@QueryParam("page") @DefaultValue("0") int page,
+    public List<ShipmentDto> list(@QueryParam("page") @DefaultValue("0") int page,
                                   @QueryParam("size") @DefaultValue("50") int size,
                                   @QueryParam("orderId") Long orderId) {
         return service.listDtos(page, size, orderId);
@@ -28,19 +25,19 @@ public class UserShipmentsEndpoint {
 
     @GET
     @Path("/{id}")
-    public Response get(@PathParam("id") Long id) {
-        return service.getByIdResponse(id);
+    public ShipmentDto get(@PathParam("id") Long id) {
+        return service.getByIdDto(id);
     }
 
     @GET
     @Path("/{id}/tracking")
-    public Response trackById(@PathParam("id") Long id) {
-        return service.trackByIdResponse(id);
+    public TrackingStatusDto trackById(@PathParam("id") Long id) {
+        return service.trackByIdDto(id);
     }
 
     @GET
     @Path("/track/{trackingNumber}")
-    public Response trackByTrackingNumber(@PathParam("trackingNumber") String trackingNumber) {
-        return service.trackByTrackingNumberResponse(trackingNumber);
+    public TrackingStatusDto trackByTrackingNumber(@PathParam("trackingNumber") String trackingNumber) {
+        return service.trackByTrackingNumberDto(trackingNumber);
     }
 }

@@ -8,7 +8,7 @@ import si.nakupify.service.MockShippingProviderService;
 /**
  * Public DTO for exposing tracking information to users.
  */
-public record TrackingStatusDTO(
+public record TrackingStatusDto(
         String trackingNumber,
         String externalStatus,
         Instant lastUpdated,
@@ -16,9 +16,9 @@ public record TrackingStatusDTO(
         String message,
         ShipmentStatus shipmentStatus
 ) {
-    public static TrackingStatusDTO from(MockShippingProviderService.ProviderStatusDTO provider,
+    public static TrackingStatusDto from(MockShippingProviderService.ProviderStatusDTO provider,
                                          ShipmentStatus shipmentStatus) {
-        return new TrackingStatusDTO(
+        return new TrackingStatusDto(
                 provider.trackingNumber(),
                 provider.externalStatus().name(),
                 provider.lastUpdated(),
