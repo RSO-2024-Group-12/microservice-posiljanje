@@ -29,9 +29,6 @@ class ShipmentServiceTest {
     ShipmentRepository repository;
 
     @InjectMock
-    ShipmentsMessagingService messaging;
-
-    @InjectMock
     MockShippingProviderService providerService;
 
     @InjectMock
@@ -72,7 +69,6 @@ class ShipmentServiceTest {
 
         var out = service.updateStatusDto(3L, ShipmentStatus.DELIVERED);
         assertEquals(ShipmentStatus.DELIVERED, out.status());
-        verify(messaging).emitShipmentUpdated(any());
     }
 
     @Test

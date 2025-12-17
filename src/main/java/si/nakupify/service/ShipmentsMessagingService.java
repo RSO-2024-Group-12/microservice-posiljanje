@@ -3,9 +3,12 @@ package si.nakupify.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
+import si.nakupify.dto.vo.ShipmentCreatedVO;
+import si.nakupify.dto.vo.ShipmentRequestedVO;
 import si.nakupify.entity.ShipmentEntity;
 
 /**
@@ -22,26 +25,18 @@ public class ShipmentsMessagingService {
     @Inject
     ObjectMapper mapper;
 
+    @Inject
+    ShipmentService shipmentService;
+
     public void emitShipmentCreated(ShipmentEntity s) {
         try {
-            var node = mapper.createObjectNode();
-            node.put("type", "SHIPMENT_CREATED");
-            node.put("shipmentId", s.id);
-            node.put("orderId", s.orderId);
-            node.put("trackingNumber", s.trackingNumber);
-            node.put("status", s.status.name());
-            shipmentsEmitter.send(mapper.writeValueAsString(node));
-        } catch (Exception ignored) {
-        }
-    }
-
-    public void emitShipmentUpdated(ShipmentEntity s) {
-        try {
-            var node = mapper.createObjectNode();
-            node.put("type", "SHIPMENT_UPDATED");
-            node.put("shipmentId", s.id);
-            node.put("status", s.status.name());
-            shipmentsEmitter.send(mapper.writeValueAsString(node));
+            var vo = new ShipmentCreatedVO(
+                    s.id,
+                    s.orderId,
+                    s.trackingNumber,
+                    s.status.name()
+            );
+            shipmentsEmitter.send(mapper.writeValueAsString(vo));
         } catch (Exception ignored) {
         }
     }
@@ -49,5 +44,26 @@ public class ShipmentsMessagingService {
     @Incoming("nakup-in")
     public void onPurchaseMessage(String message) {
         System.out.println("[posiljanje] Received from nakup: " + message);
+    }
+
+    @Incoming("shipment-requests-in")
+    public void onShipmentRequested(String message) {
+        try {
+            var vo = mapper.readValue(message, ShipmentRequestedVO.class);
+            System.out.println("[posiljanje] Creating shipment for order " + vo.orderId());
+            shipmentService.create(
+                    vo.orderId(),
+                    vo.carrier(),
+                    vo.shippingCostCents(),
+                    vo.recipientName(),
+                    vo.street(),
+                    vo.houseNumber(),
+                    vo.city(),
+                    vo.postalCode(),
+                    vo.country()
+            );
+        } catch (Exception e) {
+            System.err.println("[posiljanje] Failed to process SHIPMENT_REQUESTED: " + e.getMessage());
+        }
     }
 }

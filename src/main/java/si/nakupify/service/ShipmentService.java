@@ -49,6 +49,7 @@ public class ShipmentService {
         return repository.find("trackingNumber", trackingNumber).firstResultOptional();
     }
 
+    @Transactional
     public ShipmentEntity create(Long orderId, String carrier, Long costCents,
                                  String recipientName, String street, String houseNumber,
                                  String city, String postalCode, String country) {
@@ -68,7 +69,7 @@ public class ShipmentService {
         s.updatedAt = s.createdAt;
 
         repository.persist(s);
-        if (messaging != null) messaging.emitShipmentCreated(s);
+        messaging.emitShipmentCreated(s);
         return s;
     }
 
@@ -90,7 +91,6 @@ public class ShipmentService {
         ShipmentEntity s = repository.findByIdOrThrow(id);
         s.status = newStatus;
         s.updatedAt = Instant.now();
-        if (messaging != null) messaging.emitShipmentUpdated(s);
         return s;
     }
 
