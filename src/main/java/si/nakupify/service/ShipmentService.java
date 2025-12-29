@@ -1,5 +1,8 @@
 package si.nakupify.service;
 
+import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
+import org.eclipse.microprofile.faulttolerance.Fallback;
+import org.eclipse.microprofile.faulttolerance.Retry;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -50,6 +53,7 @@ public class ShipmentService {
     }
 
     @Transactional
+    @Retry(maxRetries = 3)
     public ShipmentEntity create(Long orderId, String carrier, Long costCents,
                                  String recipientName, String street, String houseNumber,
                                  String city, String postalCode, String country) {
@@ -87,6 +91,7 @@ public class ShipmentService {
         );
     }
 
+    @Transactional
     public ShipmentEntity updateStatus(Long id, ShipmentStatus newStatus) throws NotFoundException {
         ShipmentEntity s = repository.findByIdOrThrow(id);
         s.status = newStatus;
@@ -114,12 +119,22 @@ public class ShipmentService {
         return mapper.toDto(s);
     }
 
+    @Retry(maxRetries = 2)
+    @CircuitBreaker(requestVolumeThreshold = 4, delay = 5000)
+    @Fallback(fallbackMethod = "fallbackTrackingStatus")
     public TrackingStatusDto trackByIdDto(Long id) throws NotFoundException {
         var s = repository.findByIdOrThrow(id);
         var provider = providerService.getStatus(s.trackingNumber);
         return TrackingStatusDto.from(provider, s.status);
     }
 
+    public TrackingStatusDto fallbackTrackingStatus(Long id) {
+        var s = repository.findByIdOrThrow(id);
+        return new TrackingStatusDto(s.trackingNumber, null, s.updatedAt, null, "Tracking temporarily unavailable (fallback)", s.status);
+    }
+
+    @Retry(maxRetries = 2)
+    @CircuitBreaker(requestVolumeThreshold = 4, delay = 5000)
     public TrackingStatusDto trackByTrackingNumberDto(String trackingNumber) {
         if (trackingNumber == null || trackingNumber.isBlank()) {
             throw new BadRequestException("trackingNumber is required");
