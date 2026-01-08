@@ -18,6 +18,25 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.targetPort }}
+
+          resources:
+            requests:
+              memory: {{.Values.resources.requests.memory | quote}}
+              cpu: {{.Values.resources.requests.cpu | quote}}
+            limits:
+              memory: {{.Values.resources.limits.memory | quote}}
+              cpu: {{.Values.resources.limits.cpu | quote}}
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{.Values.config.kafka.bootstrapServers | quote}}
+            - name: QUARKUS_DATASOURCE_USERNAME
+              value: {{.Values.config.postgres.username | quote}}
+            - name: QUARKUS_DATASOURCE_PASSWORD
+              value: {{.Values.config.postgres.password | quote}}
+            - name: QUARKUS_DATASOURCE_JDBC_URL
+              value: {{.Values.config.postgres.jdbcUrl | quote}}
+            - name: QUARKUS_OIDC_TENANT_ENABLED
+              value: "false"
           {{- if .Values.probes.liveness.enabled }}
           livenessProbe:
             httpGet:

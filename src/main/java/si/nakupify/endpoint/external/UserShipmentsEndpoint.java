@@ -1,6 +1,5 @@
 package si.nakupify.endpoint.external;
 
-import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
@@ -12,7 +11,7 @@ import java.util.List;
 
 @Path("/api/shipments")
 @Transactional
-@Authenticated
+//@Authenticated
 public class UserShipmentsEndpoint {
 
     @Inject
